@@ -40,6 +40,8 @@ async def archive(request):
         logging.info("Download interrupted")
     except KeyboardInterrupt:
         await response.write_eof()
+    except BaseException:
+        logging.info("Something went wrong")
 
     finally:
         if process and process.returncode is None:  # type: ignore
