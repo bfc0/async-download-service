@@ -1,4 +1,5 @@
 from aiohttp import web
+import functools
 import aiofiles
 import asyncio
 import argparse
@@ -8,8 +9,11 @@ import logging
 CHUNK_SIZE = 1024 * 10
 
 
-async def archive(request):
+async def archive(args, request):
     name = request.match_info.get("archive_hash", None)
+    if not name:
+        logging.error("no archive name provided")
+        raise web.HTTPBadRequest(text="No Archive hash provided")
 
     path = os.path.join(".", args.path, name)
     if not os.path.exists(path):
@@ -58,12 +62,16 @@ async def handle_index_page(request):
     return web.Response(text=index_contents, content_type="text/html")
 
 
-if __name__ == "__main__":
+def main():
     parser = argparse.ArgumentParser(description="Image compression service")
-    parser.add_argument("--logging", "-l", action="store_true", help="Turn on logging")
-    parser.add_argument("--delay", "-d", type=int, default=0, help="Response delay (s)")
-    parser.add_argument("--path", default="test_photos", help="path to photos dir")
+    parser.add_argument("--logging", "-l",
+                        action="store_true", help="Turn on logging")
+    parser.add_argument("--delay", "-d", type=int,
+                        default=0, help="Response delay (s)")
+    parser.add_argument("--path", default="test_photos",
+                        help="path to photos dir")
     args = parser.parse_args()
+    archive_partial = functools.partial(archive, args)
 
     if args.logging:
         logging.basicConfig(level=logging.INFO)
@@ -72,7 +80,11 @@ if __name__ == "__main__":
     app.add_routes(
         [
             web.get("/", handle_index_page),
-            web.get("/archive/{archive_hash}/", archive),
+            web.get("/archive/{archive_hash}/", archive_partial),
         ]
     )
     web.run_app(app)
+
+
+if __name__ == "__main__":
+    main()
