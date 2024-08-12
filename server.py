@@ -10,10 +10,7 @@ CHUNK_SIZE = 1024 * 10
 
 
 async def archive(args, request):
-    name = request.match_info.get("archive_hash", None)
-    if not name:
-        logging.error("no archive name provided")
-        raise web.HTTPBadRequest(text="No Archive hash provided")
+    name = request.match_info["archive_hash"]
 
     path = os.path.join(".", args.path, name)
     if not os.path.exists(path):
@@ -64,12 +61,9 @@ async def handle_index_page(request):
 
 def main():
     parser = argparse.ArgumentParser(description="Image compression service")
-    parser.add_argument("--logging", "-l",
-                        action="store_true", help="Turn on logging")
-    parser.add_argument("--delay", "-d", type=int,
-                        default=0, help="Response delay (s)")
-    parser.add_argument("--path", default="test_photos",
-                        help="path to photos dir")
+    parser.add_argument("--logging", "-l", action="store_true", help="Turn on logging")
+    parser.add_argument("--delay", "-d", type=int, default=0, help="Response delay (s)")
+    parser.add_argument("--path", default="test_photos", help="path to photos dir")
     args = parser.parse_args()
     archive_partial = functools.partial(archive, args)
 
